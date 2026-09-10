@@ -7,6 +7,263 @@ const entrada = {
     y: 550
 };
 
+const corredores = [
+    {
+        id: 1,
+        x: 350,
+        y: 200,
+        largura: 200,
+        altura: 300,
+
+        //preciso saber onde o corredor começa e termina
+        //já que o funcionário irá passar por dentro dele para assim chegar no produtos
+        //dessa forma posso desenhar o caminho no mapa sem entrar pelas prateleiras
+        entradaX: 450,
+        entradaY: 500,
+
+        saidaX: 450,
+        saidaY: 200
+    }
+];
+
+const nos = [
+    {
+        id: 0,
+        nome: "ENTRADA",
+        x: 450,
+        y: 550
+    },
+    {
+        id: 1,
+        nome: "ENTRADA CORREDOR 1",
+        x: 450,
+        y: 500
+    },
+    {
+        id: 2,
+        nome: "SAÍDA CORREDOR 1",
+        x: 450,
+        y: 200
+    }
+];
+
+const arestas = [
+    {
+        origem: 0,
+        destino: 1,
+        bidirecional: true
+        //estou pegando aqui o nó de id 0 e o nó de id 1 no vetor de nós para construir minha aresta
+        //a distancia não será necessária pois como tem as coordenadas dos pontos, a distância é calculada por eles
+    },
+    {
+        origem: 1,
+        destino: 2,
+        bidirecional: true
+    }
+];
+
+function encontrarVizinhos(idNo){
+
+    const vizinhos = [];
+
+    arestas.forEach(aresta => {
+
+        if(aresta.origem === idNo){
+            vizinhos.push(aresta.destino);
+        }
+
+        if(aresta.bidirecional && aresta.destino === idNo){
+            vizinhos.push(aresta.origem);
+        }
+
+    });
+
+    return vizinhos;
+}
+
+console.log("vizinhos do nó 0: ", encontrarVizinhos(0));
+console.log("vizinhos do nó 1: ", encontrarVizinhos(1));
+console.log("vizinhos do nó 2: ", encontrarVizinhos(2));
+
+console.log("Peso 0 -> 1: ", calcularPesoAresta(arestas[0]));
+console.log("Peso 1 -> 2: ", calcularPesoAresta(arestas[1]));
+
+
+function calcularPesoAresta(aresta){
+    const origem = nos[aresta.origem];
+    const destino = nos[aresta.destino];
+
+    const dx = destino.x - origem.x;
+    const dy = destino.y - origem.y;
+
+    return Math.sqrt(dx * dx + dy *dy);
+    //retorna o peso da aresta no grafo que será necessário para o Dijkstra
+    //pq assim posso comparar o peso das arestas para descobrir o caminho "menos pesado", ou nesse caso, mais curto
+
+}
+
+arestas.forEach(aresta => {
+    const distancia = calcularPesoAresta(aresta);
+
+    console.log(
+        `${nos[aresta.origem].nome} → ${nos[aresta.destino].nome}:`,
+         distancia
+    );
+});
+
+function encontrarVizinhosComPeso(idNo){
+    //mesma ideia do encontrarVizinhos, só que aqui eu coloco o peso, ou as distâncias para calcular a melhor rota
+    const vizinhos = [];
+
+    arestas.forEach(aresta => {
+
+        if(aresta.origem === idNo){
+
+            vizinhos.push({
+                id: aresta.destino,
+                distancia: calcularPesoAresta(aresta)
+            });
+
+        }
+
+        if(aresta.bidirecional && aresta.destino === idNo){
+
+            vizinhos.push({
+                id: aresta.origem,
+                distancia: calcularPesoAresta(aresta)
+            });
+
+        }
+    });
+
+    return vizinhos;
+}
+
+console.log(
+    "Vizinhos do nó 1 com peso: ",
+    encontrarVizinhosComPeso(1)
+);
+
+//criando o nó inicial e setando
+//0: 0,
+//1: Infinity,
+//2: Infinity
+function criarDistancias(idOrigem){
+
+    const distancias = {};
+
+    nos.forEach(no => {
+        distancias[no.id] = Infinity;
+        //aqui percorro todos os nós e coloco todas as distancias de todos os pontos como infinito
+        //distancias[0] = Infinity
+        //distancias[1] = Infinity
+        //distancias[2] = Infinity
+        //isso pq e não qual o custo/distância de um nó até outro
+    });
+
+    distancias[idOrigem] = 0;
+
+    return distancias;
+}
+
+console.log(
+    "Distâncias iniciais: ",
+    criarDistancias(0)
+);
+
+//no início nenhum nó foi visitado, por isso o forEach colocando todos como falso
+//Na hr de usar o Dijkstra os nós que forem de fato visitados mudarão para true
+function criarVisitados(){
+
+    const visitados = [];
+
+    nos.forEach(no => {
+        visitados[no.id] = false;
+    });
+
+    return visitados;
+}
+
+console.log(
+    "Nós visitados: ",
+    criarVisitados()
+);
+
+
+
+function desenharArestas(){
+    arestas.forEach(aresta => {
+        const origem = nos[aresta.origem];
+        const destino = nos[aresta.destino];
+
+        const dx = destino.x - origem.x;
+        const dy = destino.y - origem.y;
+
+        const distancia = Math.sqrt(dx * dx + dy * dy);
+
+        const angulo = Math.atan2(dy, dx) * 180 / Math.PI;
+
+        const linha = document.createElement("div");
+
+        linha.classList.add("linha-grafo");
+
+        linha.style.left = `${origem.x}px`;
+        linha.style.top = `${origem.y}px`;
+        linha.style.width = `${distancia}px`;
+
+        linha.style.transform = `rotate(${angulo}deg)`;
+
+        estoque.appendChild(linha);
+    });
+}
+
+desenharArestas();
+
+function desenharCorredores(){
+    corredores.forEach(corredor => {
+
+        //estou criando todos os corredores existentes
+        //pegando do vetor corredores e colocando seus pontos x e y e suas larguras e alturas
+        const elemento = document.createElement("div");
+
+        elemento.classList.add("corredor");
+
+        elemento.style.left = `${corredor.x}px`;
+        elemento.style.top = `${corredor.y}px`;
+        elemento.style.width = `${corredor.largura}px`;
+        elemento.style.height = `${corredor.altura}px`;
+        //elemento.style.backgroundColor = `red`;
+
+        estoque.appendChild(elemento);
+    });
+}
+
+desenharCorredores();
+
+function desenharPontosDoCorredor(){
+    corredores.forEach(corredor => {
+
+        const entradaCorredor = document.createElement("div");
+        entradaCorredor.classList.add("ponto-caminho");
+
+        entradaCorredor.style.left = `${corredor.entradaX}px`;
+        entradaCorredor.style.top = `${corredor.entradaY}px`;
+
+        estoque.appendChild(entradaCorredor);
+
+        const saidaCorredor = document.createElement("div");
+        saidaCorredor.classList.add("ponto-caminho");
+
+        saidaCorredor.style.left = `${corredor.saidaX}px`;
+        saidaCorredor.style.top = `${corredor.saidaY}px`;
+
+        estoque.appendChild(saidaCorredor);
+
+    });
+}
+
+desenharPontosDoCorredor();
+
 const posicoes = [
     {
         id: 1,
@@ -133,6 +390,7 @@ analisarPedido(pedido);
 function criarPontosDaRota(pedido){
     const pontos = [];
 
+    //é o ponto de início, por isso é preciso colocar ele no vetor de pontos
     pontos.push({
         produto: "ENTRADA",
         posicao: 0,
@@ -140,11 +398,21 @@ function criarPontosDaRota(pedido){
         y: entrada.y 
     });
 
-    pedido.forEach(item => {
+    /*
+    //é necessário colocar o corredor, pq se não a rota será mostra direto da entrada para o primeiro produto, atravessando prateleiras e o que houver na frente e na vida real isso não acontece
+    pontos.push({
+        produto: "CORREDOR",
+        x: 450,
+        y: 200
+    });
+    */
 
+    pedido.forEach(item => {
+    
         const produto = encontrarProduto(item.produtoId);
         const posicao = encontrarPosicaoDoProduto(produto);
 
+        //aqui eu vou passando produto por produto, pegando suas infos e o que é mias importante as coordenadas para futuramente desenhar a rota no mapa do estoque e criar um efeito visual legal
         pontos.push({
             produto: produto.nome,
             posicaoId: posicao.id,
@@ -185,12 +453,147 @@ function criarMatrizDeDistancias(pontos){
     return matriz;
 }
 
+//vamos calcular a distancia de cada um dos pontos e depos somar
+function calcularDistanciaDaRota(ordem, matriz){
+    let distanciaTotal = 0;
+
+    for(let i = 0; i < ordem.length - 1; i++){
+        const origem = ordem[i];
+        const destino = ordem[i + 1];
+
+        distanciaTotal += matriz[origem][destino];
+    }
+
+    return distanciaTotal;
+}
+
+function gerarRotas(pontos){
+    const rotas = [];
+
+    const inicio = 0;
+
+    for(let i = 1; i< pontos.length; i++){
+        for(let j = 1; j < pontos.length; j++){
+            if(i !== j){
+                rotas.push([
+                    inicio,
+                    i,
+                    j
+                ]);
+            }
+        }
+    }
+
+    return rotas;
+}
+
+function encontrarMelhorRota(rotas, matriz){
+    let melhorRota = null;
+    let menorDistancia = Infinity;//considere a menor distância inicialmente como infinita, pra depois que encontrar um primeiro valor mude ele e comece de fato as comparações de distância entre as rotas
+
+    rotas.forEach(rota => {
+        const distancia = calcularDistanciaDaRota(rota, matriz);
+
+        console.log("Rota: ", rota);
+        console.log("Distância: ", distancia);
+
+        if(distancia < menorDistancia){
+            menorDistancia =  distancia;
+            melhorRota = rota;
+        }
+    });
+
+    return {
+        rota: melhorRota,
+        distancia: menorDistancia
+    };
+}
+
+function mostrarMelhorRota(resultado, pontos){
+    console.log("🏆 Melhor rota:");
+
+    resultado.rota.forEach((indice, ordem) => {//ordem indica a posição da sequência
+        const ponto = pontos[indice];
+
+        if(indice === 0){
+            console.log(`${ordem + 1}. ${ponto.produto}`);//aqui só mostra a palavra ENTRADA para o usuário
+        }else{
+            console.log(`${ordem + 1}. ${ponto.produto} - P${ponto.posicaoId}`);//aqui mostra a posição e o nome do local
+        }
+        
+    });
+
+    console.log("📏 Distância total:", resultado.distancia);
+}
+
+function desenharRota(resultado, pontos){
+    for(let i = 0; i < resultado.rota.length - 1; i++){
+        const indiceOrigem = resultado.rota[i];
+        const indiceDestino = resultado.rota[i + 1];
+
+        const origem = pontos[indiceOrigem];
+        const destino = pontos[indiceDestino];
+
+        const dx = destino.x - origem.x;
+        const dy = destino.y - origem.y;
+
+        const distancia = Math.sqrt(dx * dx + dy * dy);
+
+        const angulo = Math.atan2(dy, dx) * 180 / Math.PI;
+        //Math.atan2 retorna o angulo entre as coordenadas informadas
+
+        const linha = document.createElement("div");
+
+        linha.classList.add("linha-rota");
+
+        linha.style.left = `${origem.x}px`;
+        linha.style.top = `${origem.y}px`;
+        linha.style.width = `${distancia}px`;
+
+        linha.style.transform = `rotate(${angulo}deg)`;
+
+        estoque.appendChild(linha);
+
+        console.log(
+            "Desenhando: ",
+            origem.produto,
+            "→",
+            destino.produto
+        );
+    }
+}
+
 const pontosDaRota = criarPontosDaRota(pedido);
+
 console.log("Pontos da Rota:");
 console.table(pontosDaRota);// ajudar a visualizar como uma tabela os pontos da rota do pedido
 
 const matriz = criarMatrizDeDistancias(pontosDaRota);
 
+const rotas =  gerarRotas(pontosDaRota);
+
+const resultado = encontrarMelhorRota(rotas, matriz);
+
+mostrarMelhorRota(resultado, pontosDaRota);
+
+desenharRota(resultado, pontosDaRota);
+
+console.log("🏆 Melhor rota:", resultado.rota);
+console.log("📏 Menor distância:", resultado.distancia);
+
+/*
+console.log("Rotas possíveis: ");
+console.log(rotas);
+*/
+/*
+const rota1 = [0, 1, 2];
+const rota2 = [0, 2, 1];
+
+console.log("Rota 1:", calcularDistanciaDaRota(rota1, matriz));
+console.log("Rota 2:", calcularDistanciaDaRota(rota2, matriz));
+*/
+/*
+console.log("Matriz de distâncias:");
 console.log(matriz);
 
 const distancia = calcularDistancia(
@@ -199,6 +602,7 @@ const distancia = calcularDistancia(
 );
 
 console.log("Distância: ", distancia);
+*/
 /*
 console.log(precisaEmpilhadeira(produtos[0], posicoes[0]));
 console.log(precisaEmpilhadeira(produtos[1], posicoes[1]));
