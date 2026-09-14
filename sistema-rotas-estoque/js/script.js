@@ -1,3 +1,19 @@
+/*
+    Diferença entre o TSP e o Dijkstra
+    Dijkstra calcula todos os custos de todos os pontos possíveis, um a um
+    gera uma matriz com esses valores e depois passa para o TSP, analisar e
+    dizer qual rota é a menor
+    o TSP calcula apenas ponto a ponto, sem considerar corredores, prateleiras, etc
+    como no mundo real e na representação 2d isso não pode acontecer
+    Dijkstra → matriz → TSP → melhor ordem → caminhos físicos → desenho da rota.
+*/
+/* encontrarVizinhos() → quem está conectado a quem.
+calcularPesoAresta() → quanto custa cada conexão.
+encontrarVizinhosComPeso() → vizinho + custo.
+criarDistancias() → distância conhecida até cada nó.
+criarVisitados() → quais nós já foram processados.
+encontrarNoMenorDistancia() → qual nó se deve analisar.
+atualizarDistancias() → atualiza as distâncias através dos vizinhos. */
 const estoque = document.getElementById("estoque");
 
 const iconeEmpilhadeira = "🚜";
@@ -44,6 +60,24 @@ const nos = [
         nome: "SAÍDA CORREDOR 1",
         x: 450,
         y: 200
+    },
+    {
+        id: 3,
+        nome: "POSIÇÃO 1",
+        x: 150,
+        y: 200
+    },
+    {
+        id: 4,
+        nome: "POSIÇÃO 2",
+        x: 220,
+        y: 200
+    },
+    {
+        id: 5,
+        nome: "POSIÇÃO 3",
+        x: 290,
+        y: 200
     }
 ];
 
@@ -58,6 +92,21 @@ const arestas = [
     {
         origem: 1,
         destino: 2,
+        bidirecional: true
+    },
+    {
+        origem: 2,
+        destino: 3,
+        bidirecional: true
+    },
+    {
+        origem: 3,
+        destino: 4,
+        bidirecional: true
+    },
+    {
+        origem: 4,
+        destino: 5,
         bidirecional: true
     }
 ];
@@ -81,12 +130,12 @@ function encontrarVizinhos(idNo){
     return vizinhos;
 }
 
-console.log("vizinhos do nó 0: ", encontrarVizinhos(0));
+/* console.log("vizinhos do nó 0: ", encontrarVizinhos(0));
 console.log("vizinhos do nó 1: ", encontrarVizinhos(1));
 console.log("vizinhos do nó 2: ", encontrarVizinhos(2));
 
 console.log("Peso 0 -> 1: ", calcularPesoAresta(arestas[0]));
-console.log("Peso 1 -> 2: ", calcularPesoAresta(arestas[1]));
+console.log("Peso 1 -> 2: ", calcularPesoAresta(arestas[1])); */
 
 
 function calcularPesoAresta(aresta){
@@ -102,14 +151,14 @@ function calcularPesoAresta(aresta){
 
 }
 
-arestas.forEach(aresta => {
+/* arestas.forEach(aresta => {
     const distancia = calcularPesoAresta(aresta);
 
     console.log(
         `${nos[aresta.origem].nome} → ${nos[aresta.destino].nome}:`,
          distancia
     );
-});
+}); */
 
 function encontrarVizinhosComPeso(idNo){
     //mesma ideia do encontrarVizinhos, só que aqui eu coloco o peso, ou as distâncias para calcular a melhor rota
@@ -139,10 +188,10 @@ function encontrarVizinhosComPeso(idNo){
     return vizinhos;
 }
 
-console.log(
+/* console.log(
     "Vizinhos do nó 1 com peso: ",
     encontrarVizinhosComPeso(1)
-);
+); */
 
 //criando o nó inicial e setando
 //0: 0,
@@ -165,12 +214,12 @@ function criarDistancias(idOrigem){
 
     return distancias;
 }
-
+/*
 console.log(
     "Distâncias iniciais: ",
     criarDistancias(0)
 );
-
+*/
 //no início nenhum nó foi visitado, por isso o forEach colocando todos como falso
 //Na hr de usar o Dijkstra os nós que forem de fato visitados mudarão para true
 function criarVisitados(){
@@ -184,12 +233,132 @@ function criarVisitados(){
     return visitados;
 }
 
+/*
 console.log(
     "Nós visitados: ",
     criarVisitados()
 );
+*/
+function encontrarNoMenorDistancia(distancias, visitados){
+
+    let menorDistancia = Infinity;
+    let noMaisProximo = null;
+
+    nos.forEach(no => {
+        if(!visitados[no.id] && distancias[no.id] < menorDistancia){
+
+            menorDistancia = distancias[no.id];
+            noMaisProximo = no.id;
+
+        }
+    });
+
+    return noMaisProximo;
+}
+
+function atualizarDistancias(idNo, distancias, visitados){
+    
+    const vizinhos = encontrarVizinhosComPeso(idNo);
+
+    vizinhos.forEach(vizinho => {
+        if(visitados[vizinho.id]){
+            return;
+        }
+
+        const novaDistancia = distancias[idNo] + vizinho.distancia;
+
+        if(novaDistancia < distancias[vizinho.id]){
+            distancias[vizinho.id] = novaDistancia;
+        }
+    });
+}
+
+/* 
+const distanciasTeste2 = criarDistancias(0);
+const visitadosTeste2 = criarVisitados();
+
+atualizarDistancias(0, distanciasTeste2, visitadosTeste2);
 
 
+console.log("Distâncias após analisar o nó 0: ", distanciasTeste2);
+ */
+
+function dijkstra(idOrigem){
+    const distancias = criarDistancias(idOrigem);
+    const visitados = criarVisitados();
+
+    //toda vez que atualizar o nó ele será marcado como visitado
+    while(true){
+        const noAtual = encontrarNoMenorDistancia(
+            distancias,
+            visitados,
+        );
+
+        /* 
+        console.log("No atual:", noAtual);
+        console.log("Visitados:", visitados);
+        console.log("Distâncias:", distancias);
+         */
+
+        if(noAtual === null){
+            break;
+        }
+
+        visitados[noAtual] = true;
+
+        atualizarDistancias(
+            noAtual,
+            distancias,
+            visitados
+        );
+
+    }
+
+    console.log("Distâncias: ", distancias);
+    console.log("Visitados: ", visitados);
+
+    return distancias;
+}
+
+const resultadoDijkstra = dijkstra(0);
+const distancias1 = dijkstra(1);
+const distancias2 = dijkstra(2);
+
+console.log("Entrada → Entrada:", resultadoDijkstra[0]);
+console.log("Entrada → Nó 1:", resultadoDijkstra[1]);
+console.log("Entrada → Nó 2:", resultadoDijkstra[2]);
+
+//essa matriz contém todas as distâncias de ponto a ponto do estoque
+//depois passo para o tsp calcular qual rota é a menor
+//Vai dar uma matriz simétrica, ou seja com a diagonal principal tendo todos os valores iguais à 0
+//Visto que os corredores são bidirecionais, a pessoa pode ir e vir em um mesmo corredor
+function criarMatrizDijkstra(){
+
+    const matriz = [];
+
+    for(let i = 0; i < nos.length; i++){
+        const distancias = dijkstra(i);
+
+        matriz.push(Object.values(distancias));
+    }
+    
+    return matriz;
+}
+
+const matrizDijkstra = criarMatrizDijkstra();
+console.log("Matriz de Dijkstra: ", matrizDijkstra);
+/*
+const distanciaTeste = criarDistancias(0);
+const visitadosTeste = criarVisitados();
+
+console.log(
+    "Nó mais próximo: ",
+    encontrarNoMenorDistancia(
+        distanciaTeste,
+        visitadosTeste
+    )
+);
+*/
 
 function desenharArestas(){
     arestas.forEach(aresta => {
@@ -353,17 +522,17 @@ const item = pedido[0];
 
 const produto = encontrarProduto(item.produtoId);
 
-console.log(produto);
+//console.log(produto);
 
 function analisarProduto(produto){
     const posicao = encontrarPosicaoDoProduto(produto);
 
     const empilhadeira = precisaEmpilhadeira(produto, posicao);
 
-    console.log("Produto: ", produto.nome);
+    /* console.log("Produto: ", produto.nome);
     console.log("Posição: ", posicao.id);
     console.log("Cooordenadas: ", posicao.x, posicao.y, posicao.z);
-    console.log("Precisa de empilhadeira: ", empilhadeira);
+    console.log("Precisa de empilhadeira: ", empilhadeira); */
 }
 
 analisarProduto(produtos[0]);
@@ -376,12 +545,12 @@ function analisarPedido(pedido){
 
         const posicao = encontrarPosicaoDoProduto(produto);
 
-        console.log("-----------------------");
+        /* console.log("-----------------------");
         console.log("Produto: ", produto.nome);
         console.log("Quantidade Solicitada: ", item.quantidade);
         console.log("Posição: ", posicao.id);
         console.log("Coordenadas: ", posicao.x, posicao.y);
-        console.log("-----------------------");
+        console.log("-----------------------"); */
     });
 }
 
@@ -494,8 +663,8 @@ function encontrarMelhorRota(rotas, matriz){
     rotas.forEach(rota => {
         const distancia = calcularDistanciaDaRota(rota, matriz);
 
-        console.log("Rota: ", rota);
-        console.log("Distância: ", distancia);
+        /* console.log("Rota: ", rota);
+        console.log("Distância: ", distancia); */
 
         if(distancia < menorDistancia){
             menorDistancia =  distancia;
@@ -509,7 +678,7 @@ function encontrarMelhorRota(rotas, matriz){
     };
 }
 
-function mostrarMelhorRota(resultado, pontos){
+/* function mostrarMelhorRota(resultado, pontos){
     console.log("🏆 Melhor rota:");
 
     resultado.rota.forEach((indice, ordem) => {//ordem indica a posição da sequência
@@ -524,7 +693,7 @@ function mostrarMelhorRota(resultado, pontos){
     });
 
     console.log("📏 Distância total:", resultado.distancia);
-}
+} */
 
 function desenharRota(resultado, pontos){
     for(let i = 0; i < resultado.rota.length - 1; i++){
@@ -554,33 +723,35 @@ function desenharRota(resultado, pontos){
 
         estoque.appendChild(linha);
 
+        /*
         console.log(
             "Desenhando: ",
             origem.produto,
             "→",
             destino.produto
         );
+         */
     }
 }
 
 const pontosDaRota = criarPontosDaRota(pedido);
-
+/* 
 console.log("Pontos da Rota:");
 console.table(pontosDaRota);// ajudar a visualizar como uma tabela os pontos da rota do pedido
-
+ */
 const matriz = criarMatrizDeDistancias(pontosDaRota);
 
 const rotas =  gerarRotas(pontosDaRota);
 
 const resultado = encontrarMelhorRota(rotas, matriz);
 
-mostrarMelhorRota(resultado, pontosDaRota);
+//mostrarMelhorRota(resultado, pontosDaRota);
 
 desenharRota(resultado, pontosDaRota);
-
+/* 
 console.log("🏆 Melhor rota:", resultado.rota);
 console.log("📏 Menor distância:", resultado.distancia);
-
+ */
 /*
 console.log("Rotas possíveis: ");
 console.log(rotas);
